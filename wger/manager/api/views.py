@@ -496,7 +496,9 @@ class RepetitionsConfigViewSet(AbstractConfigViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return RepetitionsConfig.objects.none()
 
-        return RepetitionsConfig.objects.all()
+        return RepetitionsConfig.objects.filter(
+            slot_entry__slot__day__routine__user=self.request.user
+        )
 
 
 class MaxRepetitionsConfigViewSet(AbstractConfigViewSet):
@@ -515,7 +517,9 @@ class MaxRepetitionsConfigViewSet(AbstractConfigViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return MaxRepetitionsConfig.objects.none()
 
-        return MaxRepetitionsConfig.objects.all()
+        return MaxRepetitionsConfig.objects.filter(
+            slot_entry__slot__day__routine__user=self.request.user
+        )
 
 
 class SetsConfigViewSet(AbstractConfigViewSet):

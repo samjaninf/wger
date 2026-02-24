@@ -30,10 +30,10 @@ def processor(request):
     full_path = request.get_full_path()
     static_path = static('images/logos/logo-social.png')
 
-    # yapf: disable
     context = {
         'mastodon': settings.WGER_SETTINGS.get('MASTODON', ''),
         'twitter': settings.WGER_SETTINGS.get('TWITTER', ''),
+        'allow_registration': settings.WGER_SETTINGS.get('ALLOW_REGISTRATION', False),
 
         # Languages
         'i18n_language':
@@ -67,7 +67,6 @@ def processor(request):
         # current gym, if available
         'custom_header': get_custom_header(request),
     }
-    # yapf: enable
 
     # Pseudo-intelligent navigation here
     if (

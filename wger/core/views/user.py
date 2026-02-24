@@ -632,11 +632,15 @@ class WgerPasswordResetView(PasswordResetView):
         return PasswordResetForm
 
     def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.helper = FormHelper()
-        form.helper.form_class = 'wger-form'
-        form.helper.add_input(Submit('submit', _('Save'), css_class='btn-success btn-block'))
-        return form
+        # Massage django's default form. Our form already has a helper.
+        if not settings.WGER_SETTINGS['USE_RECAPTCHA']:
+            form = super().get_form(form_class)
+            form.helper = FormHelper()
+            form.helper.form_class = 'wger-form'
+            form.helper.add_input(Submit('submit', _('Save'), css_class='btn-success btn-block'))
+            return form
+
+        return super().get_form(form_class)
 
 
 class WgerPasswordResetConfirmView(PasswordResetConfirmView):

@@ -32,7 +32,6 @@ from django.forms import (
     EmailField,
     Form,
     PasswordInput,
-    widgets,
 )
 from django.utils.translation import (
     gettext as _,
@@ -349,3 +348,14 @@ class PasswordResetFormCaptcha(PasswordResetForm):
         label='reCaptcha',
         help_text=gettext_lazy('The form is secured with reCAPTCHA'),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'wger-form'
+        self.helper.layout = Layout(
+            'email',
+            'captcha',
+            ButtonHolder(Submit('submitBtn', _('Submit'), css_class='btn-success btn-block')),
+        )

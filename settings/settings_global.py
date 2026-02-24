@@ -48,6 +48,7 @@ ROOT_URLCONF = 'wger.urls'
 WSGI_APPLICATION = 'wger.wsgi.application'
 
 
+# fmt: off
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,8 +57,10 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'storages',
+
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
+
     # Apps from wger proper
     'wger.config',
     'wger.core',
@@ -72,15 +75,20 @@ INSTALLED_APPS = [
     'wger.gallery',
     'wger.measurements',
     'wger.trophies',
+
     # reCaptcha support, see https://github.com/praekelt/django-recaptcha
     'django_recaptcha',
+
     # The sitemaps app
     'django.contrib.sitemaps',
+
     # thumbnails
     'easy_thumbnails',
+
     # Form renderer helper
     'crispy_forms',
     'crispy_bootstrap5',
+
     # REST-API
     'rest_framework',
     'rest_framework.authtoken',
@@ -88,20 +96,28 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+
     # Breadcrumbs
     'django_bootstrap_breadcrumbs',
+
     # CORS
     'corsheaders',
+
     # Django Axes
     'axes',
+
     # History keeping
     'simple_history',
+
     # Django email verification
     'django_email_verification',
+
     # Activity stream
     'actstream',
+
     # Fontawesome
     'fontawesomefree',
+
     # Prometheus
     'django_prometheus',
 ]
@@ -113,26 +129,35 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+
     # Django Admin
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
     # Auth proxy middleware
     'wger.core.middleware.AuthProxyHeaderMiddleware',
+
     # Javascript Header. Sends helper headers for AJAX
     'wger.utils.middleware.JavascriptAJAXRedirectionMiddleware',
+
     # Custom authentication middleware. Creates users on-the-fly for certain paths
     'wger.utils.middleware.WgerAuthenticationMiddleware',
+
     # Send an appropriate Header so search engines don't index pages
     'wger.utils.middleware.RobotsExclusionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+
     # History keeping
     'simple_history.middleware.HistoryRequestMiddleware',
+
     # Prometheus
     'django_prometheus.middleware.PrometheusAfterMiddleware',
+
     # Django Axes
     'axes.middleware.AxesMiddleware',  # should be the last one in the list
 ]
+# fmt: off
 
 AUTHENTICATION_BACKENDS = (
     'axes.backends.AxesStandaloneBackend',  # should be the first one in the list
@@ -446,8 +471,6 @@ USER_AGENTS_CACHE = 'default'
 
 #
 # Application specific configuration options
-#
-# Consult docs/settings.rst for more information
 #
 WGER_SETTINGS = {
     'ALLOW_GUEST_USERS': True,

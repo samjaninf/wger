@@ -30,16 +30,16 @@ def processor(request):
     full_path = request.get_full_path()
     static_path = static('images/logos/logo-social.png')
 
+    # fmt: off
     context = {
         'mastodon': settings.WGER_SETTINGS.get('MASTODON', ''),
         'twitter': settings.WGER_SETTINGS.get('TWITTER', ''),
         'allow_registration': settings.WGER_SETTINGS.get('ALLOW_REGISTRATION', False),
 
         # Languages
-        'i18n_language':
-            get_language_data(
-                (get_language(), languages_dict.get(get_language(), ENGLISH_SHORT_NAME)),
-            ),
+        'i18n_language': get_language_data(
+            (get_language(), languages_dict.get(get_language(), ENGLISH_SHORT_NAME)),
+        ),
         'languages': settings.AVAILABLE_LANGUAGES,
 
         # The current path
@@ -67,6 +67,7 @@ def processor(request):
         # current gym, if available
         'custom_header': get_custom_header(request),
     }
+    # fmt: on
 
     # Pseudo-intelligent navigation here
     if '/software/' in full_path or '/contact' in full_path or '/api/v2' in full_path:

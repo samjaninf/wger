@@ -22,6 +22,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (
     AuthenticationForm,
+    PasswordResetForm,
     UserCreationForm,
 )
 from django.contrib.auth.models import User
@@ -340,3 +341,11 @@ class RegistrationFormNoCaptcha(UserCreationForm, UserEmailForm):
                 css_class='text-center',
             ),
         )
+
+
+class PasswordResetFormCaptcha(PasswordResetForm):
+    captcha = ReCaptchaField(
+        widget=ReCaptchaV3,
+        label='reCaptcha',
+        help_text=gettext_lazy('The form is secured with reCAPTCHA'),
+    )

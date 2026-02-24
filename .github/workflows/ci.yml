@@ -16,6 +16,8 @@ on:
 jobs:
   ci-job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     env:
       DJANGO_SETTINGS_MODULE: settings.ci

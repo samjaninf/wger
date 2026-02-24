@@ -69,23 +69,22 @@ def processor(request):
     }
 
     # Pseudo-intelligent navigation here
-    if (
-        '/software/' in request.get_full_path()
-        or '/contact' in request.get_full_path()
-        or '/api/v2' in request.get_full_path()
-    ):
+    if '/software/' in full_path or '/contact' in full_path or '/api/v2' in full_path:
         context['active_tab'] = constants.SOFTWARE_TAB
 
-    elif '/exercise/' in request.get_full_path():
-        context['active_tab'] = constants.WORKOUT_TAB
-
-    elif '/nutrition/' in request.get_full_path():
+    elif '/nutrition/' in full_path:
         context['active_tab'] = constants.NUTRITION_TAB
 
-    elif '/weight/' in request.get_full_path():
+    elif '/weight/' in full_path:
         context['active_tab'] = constants.WEIGHT_TAB
 
-    elif '/workout/' in request.get_full_path():
+    elif (
+        '/routine/' in full_path
+        or '/measurement/' in full_path
+        or '/exercise/' in full_path
+        or '/gallery/' in full_path
+        or '/trophies/' in full_path
+    ):
         context['active_tab'] = constants.WORKOUT_TAB
 
     return context

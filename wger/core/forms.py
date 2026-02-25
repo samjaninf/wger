@@ -286,7 +286,7 @@ class RegistrationForm(UserCreationForm, UserEmailForm):
     """
 
     captcha = ReCaptchaField(
-        widget=ReCaptchaV3,
+        widget=ReCaptchaV3(action='register'),
         label='reCaptcha',
         help_text=gettext_lazy('The form is secured with reCAPTCHA'),
     )
@@ -344,7 +344,7 @@ class RegistrationFormNoCaptcha(UserCreationForm, UserEmailForm):
 
 class PasswordResetFormCaptcha(PasswordResetForm):
     captcha = ReCaptchaField(
-        widget=ReCaptchaV3,
+        widget=ReCaptchaV3(action='password_reset'),
         label='reCaptcha',
         help_text=gettext_lazy('The form is secured with reCAPTCHA'),
     )

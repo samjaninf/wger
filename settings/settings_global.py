@@ -308,10 +308,6 @@ LOGGING = {
     },
 }
 
-#
-# ReCaptcha
-#
-RECAPTCHA_USE_SSL = True
 
 #
 # Cache
@@ -546,7 +542,9 @@ ACTSTREAM_SETTINGS = {
 # Whether the application is being run regularly or during tests
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
-# Your reCaptcha keys
+#
+# django-recaptcha
+#
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
-NOCAPTCHA = True
+RECAPTCHA_REQUIRED_SCORE = 0

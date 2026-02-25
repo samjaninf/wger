@@ -70,6 +70,7 @@ SECRET_KEY = env.str('SECRET_KEY', 'wger-docker-supersecret-key-1234567890!@#$%^
 # Your reCaptcha keys
 RECAPTCHA_PUBLIC_KEY = env.str('RECAPTCHA_PUBLIC_KEY', '')
 RECAPTCHA_PRIVATE_KEY = env.str('RECAPTCHA_PRIVATE_KEY', '')
+RECAPTCHA_REQUIRED_SCORE = env.float('RECAPTCHA_REQUIRED_SCORE', 0.75)
 
 # The site's URL (e.g. http://www.my-local-gym.com or http://localhost:8000)
 # This is needed for uploaded files and images (exercise images, etc.) to be

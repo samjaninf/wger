@@ -21,6 +21,10 @@ from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
 
+# Third Party
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
+
 # wger
 from wger.core.tests.base_testcase import WgerTestCase
 
@@ -112,3 +116,48 @@ class ChangePasswordTestCase(WgerTestCase):
         response = browser_b.get(protected_url)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response['Location'].startswith(settings.LOGIN_URL))
+
+    def test_password_change_does_not_revoke_api_credentials(self):
+        """
+        Password change is intentionally session-scoped. The DRF API key and
+        any active JWT refresh tokens must keep working — they are managed
+        explicitly via the ``/user/api-key`` page (rotate the key, revoke
+        sessions). Same model as GitHub PATs. This test guards against the
+        coupling being silently re-introduced.
+        """
+        user = User.objects.get(username='test')
+        drf_token_key = Token.objects.get(user=user).key
+
+        api = APIClient()
+        obtain = api.post(
+            '/api/v2/token',
+            {'username': 'test', 'password': 'testtest'},
+            format='json',
+        )
+        self.assertEqual(obtain.status_code, 200)
+        old_refresh = obtain.data['refresh']
+
+        self.user_login('test')
+        response = self.client.post(
+            reverse('core:user:change-password'),
+            {
+                'old_password': 'testtest',
+                'new_password1': 'shuZoh2oGu7i',
+                'new_password2': 'shuZoh2oGu7i',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+
+        # DRF token survives
+        self.assertTrue(Token.objects.filter(user=user, key=drf_token_key).exists())
+        api_drf = APIClient()
+        api_drf.credentials(HTTP_AUTHORIZATION=f'Token {drf_token_key}')
+        self.assertEqual(api_drf.get('/api/v2/weightentry/').status_code, 200)
+
+        # JWT refresh survives
+        refresh_after = api.post(
+            '/api/v2/token/refresh',
+            {'refresh': old_refresh},
+            format='json',
+        )
+        self.assertEqual(refresh_after.status_code, 200)

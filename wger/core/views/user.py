@@ -101,7 +101,11 @@ from wger.manager.models import (
     WorkoutSession,
 )
 from wger.nutrition.models import NutritionPlan
-from wger.utils.api_token import create_token
+from wger.utils.api_token import (
+    blacklist_jwt_refresh_tokens,
+    count_active_jwt_refresh_tokens,
+    create_token,
+)
 from wger.utils.generic_views import (
     WgerFormMixin,
     WgerMultiplePermissionRequiredMixin,
@@ -556,7 +560,18 @@ def api_key(request):
         # Redirect so a refresh doesn't try to rotate again
         return HttpResponseRedirect(reverse('core:user:api-key'))
 
+    if request.method == 'POST' and request.POST.get('delete_key'):
+        Token.objects.filter(user=request.user).delete()
+        messages.success(request, _('API key was deleted'))
+        return HttpResponseRedirect(reverse('core:user:api-key'))
+
+    if request.method == 'POST' and request.POST.get('revoke_jwt_sessions'):
+        blacklist_jwt_refresh_tokens(request.user)
+        messages.success(request, _('All API sessions were revoked'))
+        return HttpResponseRedirect(reverse('core:user:api-key'))
+
     context['token'] = token
+    context['active_jwt_sessions'] = count_active_jwt_refresh_tokens(request.user)
 
     return render(request, 'user/api_key.html', context)
 

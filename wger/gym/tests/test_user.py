@@ -417,6 +417,58 @@ class GymScopeGuardsTestCase(WgerTestCase):
         response = self.client.get(reverse('gym:contract:edit', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 403)
 
+    def test_delete_blocked_when_both_gyms_none(self):
+        """
+        A manager with gym=None must not be able to load (or POST to) the
+        delete-account form for another gym=None user.
+        """
+        self._both_gyms_none(attacker_pk=9)  # manager1
+        self.user_login('manager1')
+
+        response = self.client.get(
+            reverse('core:user:delete', kwargs={'user_pk': self.VICTIM_USER_PK})
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete_post_does_not_remove_victim_when_both_gyms_none(self):
+        """
+        Even on POST with correct password confirmation the destructive
+        ``user.delete()`` must not run when the attacker is not in the
+        victim's gym.
+        """
+        self._both_gyms_none(attacker_pk=9)
+        self.user_login('manager1')
+
+        response = self.client.post(
+            reverse('core:user:delete', kwargs={'user_pk': self.VICTIM_USER_PK}),
+            {'password': 'manager1manager1'},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.filter(pk=self.VICTIM_USER_PK).exists())
+
+    def test_deactivate_blocked_when_both_gyms_none(self):
+        self._both_gyms_none(attacker_pk=9)
+        self.user_login('manager1')
+
+        response = self.client.get(
+            reverse('core:user:deactivate', kwargs={'pk': self.VICTIM_USER_PK})
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.get(pk=self.VICTIM_USER_PK).is_active)
+
+    def test_activate_blocked_when_both_gyms_none(self):
+        self._both_gyms_none(attacker_pk=9)
+        victim = User.objects.get(pk=self.VICTIM_USER_PK)
+        victim.is_active = False
+        victim.save()
+        self.user_login('manager1')
+
+        response = self.client.get(
+            reverse('core:user:activate', kwargs={'pk': self.VICTIM_USER_PK})
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(User.objects.get(pk=self.VICTIM_USER_PK).is_active)
+
 
 class TrainerLogoutTestCase(WgerTestCase):
     """

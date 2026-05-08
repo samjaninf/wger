@@ -128,7 +128,7 @@ def delete(request, user_pk=None):
         # gym or is an admin as well. General admins can delete all users.
         if not request.user.has_perm('gym.manage_gyms') and (
             not request.user.has_perm('gym.manage_gym')
-            or request.user.userprofile.gym_id != user.userprofile.gym_id
+            or not is_same_gym(request.user, user)
             or user.has_perm('gym.manage_gym')
             or user.has_perm('gym.gym_trainer')
             or user.has_perm('gym.manage_gyms')
@@ -152,6 +152,8 @@ def delete(request, user_pk=None):
                 return HttpResponseRedirect(reverse('software:features'))
             else:
                 gym_pk = request.user.userprofile.gym_id
+                if gym_pk is None:
+                    return HttpResponseRedirect(reverse('core:dashboard'))
                 return HttpResponseRedirect(reverse('gym:gym:user-list', kwargs={'pk': gym_pk}))
     form.helper.form_action = request.path
     context = {'form': form, 'user_delete': user}
@@ -402,7 +404,7 @@ class UserDeactivateView(
 
         if (
             request.user.has_perm('gym.manage_gym') or request.user.has_perm('gym.gym_trainer')
-        ) and edit_user.userprofile.gym_id != request.user.userprofile.gym_id:
+        ) and not is_same_gym(request.user, edit_user):
             return HttpResponseForbidden()
 
         return super(UserDeactivateView, self).dispatch(request, *args, **kwargs)
@@ -439,7 +441,7 @@ class UserActivateView(
 
         if (
             request.user.has_perm('gym.manage_gym') or request.user.has_perm('gym.gym_trainer')
-        ) and edit_user.userprofile.gym_id != request.user.userprofile.gym_id:
+        ) and not is_same_gym(request.user, edit_user):
             return HttpResponseForbidden()
 
         return super(UserActivateView, self).dispatch(request, *args, **kwargs)
@@ -584,8 +586,9 @@ class UserDetailView(LoginRequiredMixin, WgerMultiplePermissionRequiredMixin, De
 
         page_user = self.object  # type: User
         request_user = self.request.user  # type: User
-        same_gym_id = request_user.userprofile.gym_id == page_user.userprofile.gym_id
-        context['enable_login_button'] = request_user.has_perm('gym.gym_trainer') and same_gym_id
+        context['enable_login_button'] = request_user.has_perm(
+            'gym.gym_trainer'
+        ) and is_same_gym(request_user, page_user)
         context['gym_name'] = None  # request_user.userprofile.gym.name
         return context
 

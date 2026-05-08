@@ -252,6 +252,10 @@ class WorkoutLog(models.Model):
         if self.routine and self.routine.user != self.user:
             return
 
+        # Same check for slot_entry's owning routine
+        if self.slot_entry and self.slot_entry.slot.day.routine.user != self.user:
+            return
+
         # If there is no session for this date and routine, create one
         self.session = WorkoutSession.objects.get_or_create(
             user=self.user,

@@ -18,6 +18,8 @@ def _build_mock_request(user):
     request = mock.Mock()
     request.session = dict()
     request.GET = dict()
+    request.POST = dict()
+    request.method = 'POST'
     request.user = user
     return request
 

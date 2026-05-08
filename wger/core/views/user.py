@@ -59,6 +59,7 @@ from django.utils.translation import (
     gettext as _,
     gettext_lazy,
 )
+from django.views.decorators.http import require_POST
 from django.views.generic import (
     DetailView,
     ListView,
@@ -162,9 +163,13 @@ def delete(request, user_pk=None):
 
 
 @login_required()
+@require_POST
 def trainer_login(request, user_pk):
     """
-    Allows a trainer to 'log in' as the selected user
+    Allows a trainer to 'log in' as the selected user.
+
+    POST-only: rebinding the session is a state change and must go through
+    Django's CSRF protection, which only applies to unsafe HTTP methods.
     """
     user = get_object_or_404(User, pk=user_pk)
     orig_user_pk = request.user.pk
@@ -213,7 +218,7 @@ def trainer_login(request, user_pk):
 
     if not own:
         request.session['trainer.identity'] = orig_user_pk
-        next_url = request.GET.get('next')
+        next_url = request.POST.get('next') or request.GET.get('next')
         if next_url and url_has_allowed_host_and_scheme(
             next_url,
             allowed_hosts={request.get_host()},

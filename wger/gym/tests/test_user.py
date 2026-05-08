@@ -157,7 +157,7 @@ class TrainerLoginTestCase(WgerTestCase):
         """
         Test the trainer login as an anonymous user
         """
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 1}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 1}))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(self.client.session.get('trainer.identity'))
 
@@ -166,7 +166,7 @@ class TrainerLoginTestCase(WgerTestCase):
         Test the trainer login as a logged in user without rights
         """
         self.user_login('test')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 1}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 1}))
         self.assertEqual(response.status_code, 403)
         self.assertFalse(self.client.session.get('trainer.identity'))
 
@@ -175,7 +175,7 @@ class TrainerLoginTestCase(WgerTestCase):
         Test the trainer login as a logged in user with enough rights
         """
         self.user_login('admin')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(self.client.session.get('trainer.identity'))
 
@@ -187,7 +187,7 @@ class TrainerLoginTestCase(WgerTestCase):
         profile.gym_id = 2
         profile.save()
         self.user_login('admin')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertEqual(response.status_code, 404)
         self.assertFalse(self.client.session.get('trainer.identity'))
 
@@ -201,7 +201,7 @@ class TrainerLoginTestCase(WgerTestCase):
         user.user_permissions.add(permission)
 
         self.user_login('admin')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertEqual(response.status_code, 403)
         self.assertFalse(self.client.session.get('trainer.identity'))
 
@@ -215,7 +215,7 @@ class TrainerLoginTestCase(WgerTestCase):
         user.user_permissions.add(permission)
 
         self.user_login('admin')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertEqual(response.status_code, 403)
         self.assertFalse(self.client.session.get('trainer.identity'))
 
@@ -229,12 +229,12 @@ class TrainerLoginTestCase(WgerTestCase):
 
         # Step 1: legitimate hop — trainer1 (user 4) into test (user 2)
         self.user_login('trainer1')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(self.client.session.get('trainer.identity'))
 
         # Step 2: chained hop — now-as-test, target manager1 (user 9, has manage_gym)
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 9}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 9}))
         self.assertEqual(response.status_code, 403)
 
     def test_open_redirect_external_next_blocked(self):
@@ -243,7 +243,7 @@ class TrainerLoginTestCase(WgerTestCase):
         """
         for evil in ('https://evil.example/', '//evil.example/x', '%2F%2Fevil.example'):
             self.user_login('admin')
-            response = self.client.get(
+            response = self.client.post(
                 reverse('core:user:trainer-login', kwargs={'user_pk': 2}) + f'?next={evil}'
             )
             self.assertEqual(response.status_code, 302)
@@ -252,7 +252,7 @@ class TrainerLoginTestCase(WgerTestCase):
 
     def test_safe_next_passes_through(self):
         self.user_login('admin')
-        response = self.client.get(
+        response = self.client.post(
             reverse('core:user:trainer-login', kwargs={'user_pk': 2}) + '?next=/exercise/overview'
         )
         self.assertEqual(response.status_code, 302)
@@ -268,8 +268,17 @@ class TrainerLoginTestCase(WgerTestCase):
         user.user_permissions.add(permission)
 
         self.user_login('admin')
-        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        response = self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertEqual(response.status_code, 403)
+        self.assertFalse(self.client.session.get('trainer.identity'))
+
+    def test_get_does_not_rebind_session(self):
+        """
+        ``trainer_login`` must reject unsafe HTTP methods
+        """
+        self.user_login('admin')
+        response = self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        self.assertEqual(response.status_code, 405)
         self.assertFalse(self.client.session.get('trainer.identity'))
 
 
@@ -355,7 +364,7 @@ class GymScopeGuardsTestCase(WgerTestCase):
         self._both_gyms_none(attacker_pk=4)  # trainer1
         self.user_login('trainer1')
 
-        response = self.client.get(
+        response = self.client.post(
             reverse('core:user:trainer-login', kwargs={'user_pk': self.VICTIM_USER_PK})
         )
         self.assertIn(response.status_code, (403, 404))
@@ -480,8 +489,8 @@ class TrainerLogoutTestCase(WgerTestCase):
         Test the trainer login as an anonymous user
         """
         self.user_login('admin')
-        self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
+        self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 2}))
         self.assertTrue(self.client.session.get('trainer.identity'))
 
-        self.client.get(reverse('core:user:trainer-login', kwargs={'user_pk': 1}))
+        self.client.post(reverse('core:user:trainer-login', kwargs={'user_pk': 1}))
         self.assertFalse(self.client.session.get('trainer.identity'))

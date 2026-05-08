@@ -221,7 +221,9 @@ AXES_IPWARE_META_PRECEDENCE_ORDER = env.list(
 # Django Rest Framework SimpleJWT
 #
 SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'] = timedelta(minutes=env.int('ACCESS_TOKEN_LIFETIME', 15))
-SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'] = timedelta(hours=env.int('REFRESH_TOKEN_LIFETIME', 24 * 30 * 4))
+SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'] = timedelta(
+    hours=env.int('REFRESH_TOKEN_LIFETIME', 24 * 30 * 4)
+)
 _SIGNING_KEY = env.str('SIGNING_KEY', '')
 if not _SIGNING_KEY or _SIGNING_KEY in _DEFAULT_KEYS:
     _SIGNING_KEY = secrets.token_urlsafe(50)

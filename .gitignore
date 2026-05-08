@@ -87,6 +87,7 @@ venv-wger
 /extras/authors/commits_cache/
 /extras/authors/*-AUTHORS.md
 /extras/scripts/*.json
+/extras/open-food-facts/dump/
 /.claude/
 
 # macOS

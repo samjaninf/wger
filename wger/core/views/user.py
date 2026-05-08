@@ -407,6 +407,21 @@ class UserDeactivateView(
         ) and not is_same_gym(request.user, edit_user):
             return HttpResponseForbidden()
 
+        # A user with only the trainer permission must not be able to (de)activate
+        # other gym staff (managers, fellow trainers, general managers). Group
+        # membership is checked directly so the rule still applies when the
+        # target account is currently deactivated (``has_perm`` returns ``False``
+        # for inactive users).
+        if (
+            request.user.has_perm('gym.gym_trainer')
+            and not request.user.has_perm('gym.manage_gym')
+            and not request.user.has_perm('gym.manage_gyms')
+            and edit_user.groups.filter(
+                name__in=('gym_trainer', 'gym_manager', 'general_gym_manager')
+            ).exists()
+        ):
+            return HttpResponseForbidden()
+
         return super(UserDeactivateView, self).dispatch(request, *args, **kwargs)
 
     def get_redirect_url(self, pk):
@@ -442,6 +457,21 @@ class UserActivateView(
         if (
             request.user.has_perm('gym.manage_gym') or request.user.has_perm('gym.gym_trainer')
         ) and not is_same_gym(request.user, edit_user):
+            return HttpResponseForbidden()
+
+        # A user with only the trainer permission must not be able to
+        # (de)activate other gym staff (managers, fellow trainers,
+        # general managers). Group membership is checked directly so the
+        # rule still applies when the target account is currently
+        # deactivated (``has_perm`` returns ``False`` for inactive users).
+        if (
+            request.user.has_perm('gym.gym_trainer')
+            and not request.user.has_perm('gym.manage_gym')
+            and not request.user.has_perm('gym.manage_gyms')
+            and edit_user.groups.filter(
+                name__in=('gym_trainer', 'gym_manager', 'general_gym_manager')
+            ).exists()
+        ):
             return HttpResponseForbidden()
 
         return super(UserActivateView, self).dispatch(request, *args, **kwargs)

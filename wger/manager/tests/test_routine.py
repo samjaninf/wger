@@ -510,6 +510,45 @@ class RoutineApiTestCase(ApiBaseResourceTestCase):
     }
 
 
+class RoutineDateValidationTestCase(WgerTestCase):
+    """
+    The routine API must enforce sane date bounds:
+    - ``end`` may not be before ``start``
+    - the duration may not exceed ``Routine.MAX_DURATION_DAYS``, otherwise
+      walking the ``date_sequence`` could be abused to consume server CPU.
+    """
+
+    def _post_routine(self, start, end):
+        self.user_login('test')
+        return self.client.post(
+            reverse('routine-list'),
+            data={
+                'name': 'duration test',
+                'start': start.isoformat(),
+                'end': end.isoformat(),
+            },
+            content_type='application/json',
+        )
+
+    def test_rejects_routine_longer_than_limit(self):
+        start = datetime.date(2024, 1, 1)
+        end = start + datetime.timedelta(days=Routine.MAX_DURATION_DAYS + 1)
+        response = self._post_routine(start, end)
+        self.assertEqual(response.status_code, 400)
+
+    def test_accepts_routine_at_limit(self):
+        start = datetime.date(2024, 1, 1)
+        end = start + datetime.timedelta(days=Routine.MAX_DURATION_DAYS)
+        response = self._post_routine(start, end)
+        self.assertEqual(response.status_code, 201)
+
+    def test_rejects_end_before_start(self):
+        start = datetime.date(2024, 6, 1)
+        end = datetime.date(2024, 1, 1)
+        response = self._post_routine(start, end)
+        self.assertEqual(response.status_code, 400)
+
+
 class RoutineLogsAndStatsScopeTestCase(WgerTestCase):
     """
     The /logs/ and /stats/ actions of a routine return the owner's

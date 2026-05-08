@@ -10,6 +10,9 @@ on:
 env:
   REGISTRY_IMAGE: ${{ vars.REGISTRY_REPO }}/server
 
+permissions:
+  contents: read
+
 jobs:
   build-prod:
     name: Build production image ${{ matrix.platform }}

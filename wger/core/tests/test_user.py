@@ -164,18 +164,14 @@ class TrainerCannotDeactivatePrivilegedUsersTestCase(WgerTestCase):
 
     def test_trainer_cannot_deactivate_manager(self):
         self.user_login(self.TRAINER)
-        response = self.client.get(
-            reverse('core:user:deactivate', kwargs={'pk': self.MANAGER_PK})
-        )
+        response = self.client.get(reverse('core:user:deactivate', kwargs={'pk': self.MANAGER_PK}))
         self.assertEqual(response.status_code, 403)
         self.assertTrue(User.objects.get(pk=self.MANAGER_PK).is_active)
 
     def test_trainer_cannot_activate_manager(self):
         self._set_active(self.MANAGER_PK, False)
         self.user_login(self.TRAINER)
-        response = self.client.get(
-            reverse('core:user:activate', kwargs={'pk': self.MANAGER_PK})
-        )
+        response = self.client.get(reverse('core:user:activate', kwargs={'pk': self.MANAGER_PK}))
         self.assertEqual(response.status_code, 403)
         self.assertFalse(User.objects.get(pk=self.MANAGER_PK).is_active)
 

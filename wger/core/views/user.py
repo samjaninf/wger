@@ -616,9 +616,9 @@ class UserDetailView(LoginRequiredMixin, WgerMultiplePermissionRequiredMixin, De
 
         page_user = self.object  # type: User
         request_user = self.request.user  # type: User
-        context['enable_login_button'] = request_user.has_perm(
-            'gym.gym_trainer'
-        ) and is_same_gym(request_user, page_user)
+        context['enable_login_button'] = request_user.has_perm('gym.gym_trainer') and is_same_gym(
+            request_user, page_user
+        )
         context['gym_name'] = None  # request_user.userprofile.gym.name
         return context
 

@@ -128,6 +128,27 @@ class MainImageTestCase(WgerTestCase):
 
         self.assertTrue(image.is_ai_generated)
 
+    def test_replacing_image_keeps_new_file(self):
+        """
+        Replacing the file on an existing ExerciseImage must keep the new file
+        on the model. The pre_save signal cleans up the *old* file, not the new
+        one being saved (regression test for the signal deleting instance.image).
+        """
+
+        translation = Translation.objects.get(pk=2)
+        pk = self.save_image(translation.exercise, 'protestschwein.jpg')
+
+        image = ExerciseImage.objects.get(pk=pk)
+        old_name = image.image.name
+        self.assertTrue(old_name)
+
+        with open('wger/exercises/tests/wildschwein.jpg', 'rb') as new_file:
+            image.image.save('wildschwein.jpg', File(new_file))
+
+        image.refresh_from_db()
+        self.assertTrue(image.image.name, 'image field was cleared after replacing the file')
+        self.assertNotEqual(image.image.name, old_name)
+
 
 class ExerciseImageFromJsonSimpleTests(SimpleTestCase):
     def test_from_json_sets_fields_when_generate_uuid_false(self):

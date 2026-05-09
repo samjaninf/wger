@@ -61,11 +61,11 @@ def delete_exercise_image_on_update(sender, instance: ExerciseImage, **kwargs):
         return False
 
     new_file = instance.image
-    if not old_file == new_file:
-        # Deletes the image as well as the thumbnails
-        thumbnailer = get_thumbnailer(instance.image)
+    if not old_file == new_file and old_file:
+        # Deletes the old image as well as its thumbnails
+        thumbnailer = get_thumbnailer(old_file)
         thumbnailer.delete_thumbnails()
-        instance.image.delete(save=False)
+        old_file.delete(save=False)
     return None
 
 

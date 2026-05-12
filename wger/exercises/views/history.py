@@ -36,6 +36,7 @@ from django.shortcuts import (
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 
 # Third Party
 import django_filters
@@ -262,6 +263,7 @@ def control(request: HttpRequest) -> HttpResponse:
     )
 
 
+@require_POST
 @permission_required('exercises.change_exercise')
 def history_revert(request, history_pk, content_type_id):
     """

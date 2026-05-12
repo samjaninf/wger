@@ -66,7 +66,7 @@ class ExerciseHistoryControl(WgerTestCase):
 
     def test_admin_revert_view(self):
         """
-        Test that revert is accessible
+        Test that revert is accessible via POST
         """
         self.user_login()
 
@@ -78,7 +78,7 @@ class ExerciseHistoryControl(WgerTestCase):
         translation.description = 'Very cool exercise!'
         translation.save()
 
-        self.client.get(
+        response = self.client.post(
             reverse(
                 'exercise:history:revert',
                 kwargs={
@@ -88,8 +88,37 @@ class ExerciseHistoryControl(WgerTestCase):
             )
         )
 
+        self.assertEqual(response.status_code, 302)
         translation = Translation.objects.get(pk=2)
         self.assertEqual(translation.description, 'Boring exercise')
+
+    def test_admin_revert_rejects_get(self):
+        """
+        Revert is state-changing and must not be reachable via GET; only POST
+        with a CSRF token is allowed.
+        """
+        self.user_login()
+
+        translation = Translation.objects.get(pk=2)
+        translation.description = 'Boring exercise'
+        translation.save()
+        most_recent_history = translation.history.order_by('history_date').last()
+        translation.description = 'Very cool exercise!'
+        translation.save()
+
+        response = self.client.get(
+            reverse(
+                'exercise:history:revert',
+                kwargs={
+                    'history_pk': most_recent_history.history_id,
+                    'content_type_id': ContentType.objects.get_for_model(translation).id,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 405)
+        translation = Translation.objects.get(pk=2)
+        self.assertEqual(translation.description, 'Very cool exercise!')
 
 
 class ExerciseHistoryControlExtras(WgerTestCase):

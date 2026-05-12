@@ -151,11 +151,14 @@
                                             <h4 class="modal-title">{% translate 'Are you sure?' %}</h4>
                                         </div>
                                         <div class="modal-body">
-                                            <a href="{% url 'exercise:history:revert' event.history_id event.content_type_id %}"
-                                               id="view-changes"
-                                               class="btn btn-danger btn-sm btn-block">
-                                                {% translate "Yes" %}
-                                            </a>
+                                            <form method="post"
+                                                  action="{% url 'exercise:history:revert' event.history_id event.content_type_id %}">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn btn-danger btn-sm btn-block">
+                                                    {% translate "Yes" %}
+                                                </button>
+                                            </form>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button"

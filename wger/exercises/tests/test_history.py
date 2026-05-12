@@ -237,3 +237,78 @@ class ExerciseHistoryControlExtras(WgerTestCase):
         self.assertGreaterEqual(response.context['stats']['last_24h'], 1)
         self.assertGreaterEqual(response.context['stats']['last_7d'], 1)
         self.assertGreaterEqual(response.context['stats']['last_30d'], 1)
+
+    def test_deleted_event_surfaces_without_action_object(self):
+        """
+        A DELETED actstream event has no action_object (the original is gone)
+        but must still appear in the feed with model_key picked up from
+        ``data.model_type``.
+        """
+        actstream_action.send(
+            self.user,
+            verb=StreamVerbs.DELETED.value,
+            deleted_uuid='ae3328ba-9a35-4731-bc23-5da50720c5aa',
+            deleted_repr='Some deleted exercise',
+            model_type='exercise',
+        )
+
+        response = self.client.get(reverse('exercise:history:overview'))
+        self.assertEqual(response.status_code, 200)
+
+        deleted_events = [
+            e for e in response.context['context']
+            if e['verb'] == StreamVerbs.DELETED.value
+        ]
+        self.assertEqual(len(deleted_events), 1)
+        self.assertEqual(deleted_events[0]['model_key'], 'exercise')
+        self.assertContains(response, 'Some deleted exercise')
+
+    def test_merged_event_links_to_replacement(self):
+        """
+        A MERGED event keeps its action_object pointing at the surviving
+        replacement exercise.
+        """
+        replacement = Translation.objects.get(pk=2).exercise
+
+        actstream_action.send(
+            self.user,
+            verb=StreamVerbs.MERGED.value,
+            action_object=replacement,
+            deleted_uuid='ae3328ba-9a35-4731-bc23-5da50720c5aa',
+            deleted_repr='Duplicate exercise',
+            transfer_media=True,
+            transfer_translations=False,
+        )
+
+        response = self.client.get(reverse('exercise:history:overview'))
+        self.assertEqual(response.status_code, 200)
+
+        merged_events = [
+            e for e in response.context['context']
+            if e['verb'] == StreamVerbs.MERGED.value
+        ]
+        self.assertEqual(len(merged_events), 1)
+        self.assertEqual(merged_events[0]['stream'].action_object, replacement)
+        self.assertContains(response, 'Duplicate exercise')
+
+    def test_filter_by_verb_deleted(self):
+        """The verb dropdown can isolate DELETED events."""
+        translation = Translation.objects.get(pk=2)
+        self._make_action(translation, verb=StreamVerbs.UPDATED.value)
+        actstream_action.send(
+            self.user,
+            verb=StreamVerbs.DELETED.value,
+            deleted_uuid='ae3328ba-9a35-4731-bc23-5da50720c5aa',
+            deleted_repr='Gone',
+            model_type='exercise',
+        )
+
+        response = self.client.get(
+            reverse('exercise:history:overview') + '?verb=deleted'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['context']), 1)
+        self.assertEqual(
+            response.context['context'][0]['verb'],
+            StreamVerbs.DELETED.value,
+        )

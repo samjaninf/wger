@@ -70,6 +70,10 @@
                                     <span class="text-success {% fa_class 'circle-plus' %}"></span>
                                 {% elif event.stream.verb == verbs.UPDATED.value %}
                                     <span class="text-primary {% fa_class 'pen' %}"></span>
+                                {% elif event.stream.verb == verbs.DELETED.value %}
+                                    <span class="text-danger {% fa_class 'trash' %}"></span>
+                                {% elif event.stream.verb == verbs.MERGED.value %}
+                                    <span class="text-warning {% fa_class 'code-merge' %}"></span>
                                 {% else %}
                                     <span class="text-muted {% fa_class 'circle-question' %}"></span>
                                 {% endif %}
@@ -90,6 +94,10 @@
                                         <span class="text-muted">{% translate "created" %}</span>
                                     {% elif event.stream.verb == verbs.UPDATED.value %}
                                         <span class="text-muted">{% translate "edited" %}</span>
+                                    {% elif event.stream.verb == verbs.DELETED.value %}
+                                        <span class="text-muted">{% translate "deleted" %}</span>
+                                    {% elif event.stream.verb == verbs.MERGED.value %}
+                                        <span class="text-muted">{% translate "merged" %}</span>
                                     {% else %}
                                         <span class="text-muted">{{ event.verb }}</span>
                                     {% endif %}
@@ -98,7 +106,26 @@
                                         <span class="badge {{ event.badge_class }}">{{ event.model_key }}</span>
                                     {% endif %}
 
-                                    {% if event.object_missing %}
+                                    {% if event.stream.verb == verbs.DELETED.value %}
+                                        <em>{{ event.stream.data.deleted_repr }}</em>
+                                    {% elif event.stream.verb == verbs.MERGED.value %}
+                                        <em>{{ event.stream.data.deleted_repr }}</em>
+                                        <span class="text-muted">{% translate "into" %}</span>
+                                        {% if event.stream.action_object.get_absolute_url %}
+                                            <a href="{{ event.stream.action_object.get_absolute_url }}"
+                                               class="fw-semibold text-decoration-none">
+                                                {{ event.stream.action_object }}
+                                            </a>
+                                        {% else %}
+                                            {{ event.stream.action_object }}
+                                        {% endif %}
+                                        {% if event.stream.data.transfer_media %}
+                                            <span class="badge text-bg-light">+{% translate "media" %}</span>
+                                        {% endif %}
+                                        {% if event.stream.data.transfer_translations %}
+                                            <span class="badge text-bg-light">+{% translate "translations" %}</span>
+                                        {% endif %}
+                                    {% elif event.object_missing %}
                                         <em class="text-muted">{% translate "Object was deleted" %}</em>
                                     {% elif event.stream.action_object.get_absolute_url %}
                                         <a href="{{ event.stream.action_object.get_absolute_url }}"

@@ -27,7 +27,7 @@ from django.core.paginator import (
     PageNotAnInteger,
     Paginator,
 )
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
 from django.shortcuts import (
     get_object_or_404,
@@ -144,17 +144,26 @@ class ActionHistoryFilter(django_filters.FilterSet):
         if not value:
             return queryset
         user_ct = ContentType.objects.get_for_model(User)
+        # ``actor_object_id`` is a CharField in actstream (generic FK), but
+        # ``User.pk`` is an integer. Postgres rejects the implicit cast, so the
+        # subquery is materialized and stringified here.
+        user_pks = User.objects.filter(
+            username__icontains=value,
+        ).values_list('pk', flat=True)
         return queryset.filter(
             actor_content_type=user_ct,
-            actor_object_id__in=User.objects.filter(
-                username__icontains=value
-            ).values_list('pk', flat=True),
+            actor_object_id__in=[str(pk) for pk in user_pks],
         )
 
     def filter_model_type(self, queryset: QuerySet, name: str, value: str):
         ct_map = _content_type_map()
         if value in ct_map:
-            return queryset.filter(action_object_content_type=ct_map[value])
+            # Also include DELETED events for this type, where action_object is
+            # gone and the model is recorded in ``data.model_type`` instead.
+            return queryset.filter(
+                Q(action_object_content_type=ct_map[value])
+                | Q(verb=StreamVerbs.DELETED.value, data__model_type=value)
+            )
         return queryset
 
 
@@ -169,21 +178,28 @@ def control(request: HttpRequest) -> HttpResponse:
     ct_id_to_key = {ct.id: key for key, ct in ct_map.items()}
     tracked_ct_ids = [ct.id for ct in ct_map.values()]
 
+    # Include events tied to a tracked exercise model via action_object, plus
+    # DELETED events that no longer have an action_object (the original was
+    # deleted) but recorded their model in ``data.model_type``.
+    tracked_filter = Q(action_object_content_type__in=tracked_ct_ids) | Q(
+        verb=StreamVerbs.DELETED.value,
+        data__model_type__in=[key for key, *_ in TRACKED_MODELS],
+    )
+
     base_queryset = (
         Action.objects.select_related(
             'actor_content_type',
             'action_object_content_type',
             'target_content_type',
         )
-        # Only show events related to tracked exercise models
-        .filter(action_object_content_type__in=tracked_ct_ids)
+        .filter(tracked_filter)
         .order_by('-timestamp')
     )
 
     action_filter = ActionHistoryFilter(request.GET, queryset=base_queryset)
 
     now = timezone.now()
-    stats_base = Action.objects.filter(action_object_content_type__in=tracked_ct_ids)
+    stats_base = Action.objects.filter(tracked_filter)
     stats = {
         'last_24h': stats_base.filter(timestamp__gte=now - timedelta(days=1)).count(),
         'last_7d': stats_base.filter(timestamp__gte=now - timedelta(days=7)).count(),
@@ -219,6 +235,11 @@ def control(request: HttpRequest) -> HttpResponse:
         )
 
         model_key = ct_id_to_key.get(entry.action_object_content_type_id)
+        # DELETED events have no action_object — the model type is carried in
+        # ``data.model_type`` instead.
+        if not model_key and entry.verb == StreamVerbs.DELETED.value and entry.data:
+            model_key = entry.data.get('model_type')
+
         data = {
             'verb': entry.verb,
             'stream': entry,

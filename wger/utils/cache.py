@@ -56,12 +56,6 @@ class CacheKeyMapper:
         """
         return f'language-{self.get_pk(param)}'
 
-    def get_ingredient_key(self, param):
-        """
-        Return the ingredient cache key
-        """
-        return f'ingredient-{self.get_pk(param)}'
-
     def get_workout_log_list(self, hash_value):
         """
         Return the workout canonical representation

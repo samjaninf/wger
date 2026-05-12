@@ -21,12 +21,54 @@
         Main Content
 -->
 {% block content %}
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body py-2">
+                    <small class="text-muted">{% translate "Edits last 24h" %}</small>
+                    <h4 class="mb-0">{{ stats.last_24h }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body py-2">
+                    <small class="text-muted">{% translate "Edits last 7d" %}</small>
+                    <h4 class="mb-0">{{ stats.last_7d }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body py-2">
+                    <small class="text-muted">{% translate "Edits last 30d" %}</small>
+                    <h4 class="mb-0">{{ stats.last_30d }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        {% for field in filter.form %}
+            <div class="col-md-2">
+                <label for="{{ field.id_for_label }}" class="form-label mb-0">{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary">{% translate "Apply" %}</button>
+            <a href="{% url 'exercise:history:overview' %}" class="btn btn-sm btn-outline-secondary">{% translate "Reset" %}</a>
+        </div>
+    </form>
+
     <table class="table">
         <thead class="thead-light">
         <tr>
             <th scope="col" style="width: 5%">{% translate 'Action' %}</th>
-            <th scope="col" style="width: 5%">{% translate 'User' %}</th>
-            <th scope="col" style="width: 45%">{% translate 'Object' %}</th>
+            <th scope="col" style="width: 10%">{% translate 'User' %}</th>
+            <th scope="col" style="width: 8%">{% translate 'Type' %}</th>
+            <th scope="col" style="width: 32%">{% translate 'Object' %}</th>
             <th scope="col" style="width: 15%">{% translate 'Time' %}</th>
             <th scope="col" style="width: 15%">{% translate 'Changes' %}</th>
             <th scope="col" style="width: 15%">{% translate 'Revert' %}</th>
@@ -34,7 +76,7 @@
         </thead>
         <tbody>
         {% for event in context %}
-            <tr>
+            <tr {% if event.is_new_contributor %}class="table-warning"{% endif %}>
                 <td>
                     {% if event.stream.verb == verbs.CREATED.value %}
                         <span class="{% fa_class 'circle-plus' %}"></span>
@@ -44,9 +86,23 @@
                         {{ event.verb }}
                     {% endif %}
                 </td>
-                <td>{{ event.stream.actor }}</td>
                 <td>
-                    {% if event.stream.action_object.get_absolute_url %}
+                    {{ event.stream.actor }}
+                    {% if event.is_new_contributor %}
+                        <span class="badge bg-warning text-dark" title="{% translate 'Account younger than 60 days' %}">
+                            {% translate 'new' %}
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.model_key %}
+                        <span class="badge text-bg-light">{{ event.model_key }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.object_missing %}
+                        <em class="text-muted">{% translate "Object was deleted" %}</em>
+                    {% elif event.stream.action_object.get_absolute_url %}
                         <a href="{{ event.stream.action_object.get_absolute_url }}">{{ event.stream.action_object }}</a>
                     {% else %}
                         {{ event.stream.action_object }}
@@ -59,10 +115,12 @@
                 <td>{{ event.stream.timesince }}</td>
                 {% if event.stream.verb == verbs.CREATED.value %}
                     <td>
-                        <a href="{{ event.stream.action_object.get_absolute_url }}" id="view-changes"
-                           class="btn btn-success btn-sm btn-block">
-                            {% translate "View Object" %}
-                        </a>
+                        {% if not event.object_missing %}
+                            <a href="{{ event.stream.action_object.get_absolute_url }}" id="view-changes"
+                               class="btn btn-success btn-sm btn-block">
+                                {% translate "View Object" %}
+                            </a>
+                        {% endif %}
                     </td>
                     <td>
 
@@ -114,7 +172,7 @@
                 {% endif %}
             </tr>
             <tr class="collapse" id="collapse-{{ event.stream.id }}">
-                <td colspan="6">
+                <td colspan="7">
                     <table class="table">
                         <thead>
                         <tr>
@@ -142,6 +200,50 @@
         {% endfor %}
         </tbody>
     </table>
+
+    {% if is_paginated %}
+        <nav aria-label="{% translate 'History pagination' %}">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if querystring %}&amp;{{ querystring }}{% endif %}">
+                            « {% translate "First" %}
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&amp;{{ querystring }}{% endif %}">
+                            ‹ {% translate "Previous" %}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">« {% translate "First" %}</span></li>
+                    <li class="page-item disabled"><span class="page-link">‹ {% translate "Previous" %}</span></li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        {% blocktranslate with current=page_obj.number total=paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&amp;{{ querystring }}{% endif %}">
+                            {% translate "Next" %} ›
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ paginator.num_pages }}{% if querystring %}&amp;{{ querystring }}{% endif %}">
+                            {% translate "Last" %} »
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">{% translate "Next" %} ›</span></li>
+                    <li class="page-item disabled"><span class="page-link">{% translate "Last" %} »</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 {% endblock %}
 
 

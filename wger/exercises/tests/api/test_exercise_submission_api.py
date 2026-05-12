@@ -154,6 +154,49 @@ class SearchSubmissionApiTestCase(BaseTestCase, ApiBaseTestCase):
             response_data.get('translations'), ['You must provide at least one translation.']
         )
 
+    def test_unsuccessful_submission_language_mismatch_description(self):
+        """
+        A translation whose description language doesn't match the declared language
+        field is rejected.
+        """
+        self.authenticate('admin')
+
+        payload = self.get_payload()
+        # Swap the EN description for a clearly German one.
+        payload['translations'][0]['description_source'] = (
+            'Das ist eine deutsche Beschreibung der Übung, mit ausreichend Text '
+            'damit die Spracherkennung sie zuverlässig erkennen kann.'
+        )
+
+        counts_before = self.get_counts()
+        response = self.client.post(self.url, data=payload)
+        counts_after = self.get_counts()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(counts_before, counts_after)
+        self.assertIn('language', response.json().get('translations')[0])
+
+    def test_unsuccessful_submission_language_mismatch_comment(self):
+        """
+        A comment whose detected language doesn't match the parent translation's
+        language is rejected.
+        """
+        self.authenticate('admin')
+
+        payload = self.get_payload()
+        # Replace one of the English comments with a clearly French one.
+        payload['translations'][0]['comments'][0]['comment'] = (
+            'Ceci est un long commentaire en français qui ne correspond pas du '
+            'tout à la traduction anglaise et devrait être rejeté.'
+        )
+
+        counts_before = self.get_counts()
+        response = self.client.post(self.url, data=payload)
+        counts_after = self.get_counts()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(counts_before, counts_after)
+
     def test_unsuccessful_submission_no_english_translations(self):
         """
         If any part of the exercise submission fails, no exercise is created.

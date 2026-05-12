@@ -98,7 +98,7 @@ class ExerciseViewSet(ModelViewSet):
         """
         Save entry to activity stream
         """
-        super().perform_create(serializer)
+        super().perform_update(serializer)
         actstream_action.send(
             self.request.user,
             verb=StreamVerbs.UPDATED.value,
@@ -329,7 +329,7 @@ class ExerciseImageViewSet(ModelViewSet):
         """
         Save entry to activity stream
         """
-        super().perform_create(serializer)
+        super().perform_update(serializer)
         actstream_action.send(
             self.request.user,
             verb=StreamVerbs.UPDATED.value,
@@ -368,7 +368,7 @@ class ExerciseVideoViewSet(ModelViewSet):
         """
         Save entry to activity stream
         """
-        super().perform_create(serializer)
+        super().perform_update(serializer)
         actstream_action.send(
             self.request.user,
             verb=StreamVerbs.UPDATED.value,
@@ -410,7 +410,7 @@ class ExerciseCommentViewSet(ModelViewSet):
         """
         Save entry to activity stream
         """
-        super().perform_create(serializer)
+        super().perform_update(serializer)
         actstream_action.send(
             self.request.user,
             verb=StreamVerbs.UPDATED.value,
@@ -444,7 +444,7 @@ class ExerciseAliasViewSet(ModelViewSet):
         """
         Save entry to activity stream
         """
-        super().perform_create(serializer)
+        super().perform_update(serializer)
         actstream_action.send(
             self.request.user,
             verb=StreamVerbs.UPDATED.value,

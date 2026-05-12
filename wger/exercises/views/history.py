@@ -63,6 +63,16 @@ TRACKED_MODELS = (
     ('alias', 'exercises', 'alias'),
 )
 
+# Bootstrap badge variant per tracked model
+BADGE_CLASS_BY_MODEL = {
+    'exercise': 'text-bg-success',
+    'translation': 'text-bg-primary',
+    'image': 'text-bg-info',
+    'video': 'text-bg-danger',
+    'comment': 'text-bg-warning',
+    'alias': 'text-bg-secondary',
+}
+
 NEW_CONTRIBUTOR_DAYS = 60
 """
 Edits made by accounts younger than this are visually flagged so admins can
@@ -208,10 +218,12 @@ def control(request: HttpRequest) -> HttpResponse:
             actor and actor.date_joined and actor.date_joined >= new_contributor_cutoff
         )
 
+        model_key = ct_id_to_key.get(entry.action_object_content_type_id)
         data = {
             'verb': entry.verb,
             'stream': entry,
-            'model_key': ct_id_to_key.get(entry.action_object_content_type_id),
+            'model_key': model_key,
+            'badge_class': BADGE_CLASS_BY_MODEL.get(model_key, 'text-bg-light'),
             'is_new_contributor': is_new_contributor,
             'object_missing': False,
         }

@@ -16,6 +16,7 @@
 from wger.core.tests.api_base_test import ExerciseCrudApiTestCase
 from wger.core.tests.base_testcase import WgerTestCase
 from wger.exercises.models import ExerciseComment
+from wger.exercises.tests.api_mixins import ActstreamApiMixin
 
 
 class ExerciseCommentRepresentationTestCase(WgerTestCase):
@@ -30,7 +31,7 @@ class ExerciseCommentRepresentationTestCase(WgerTestCase):
         self.assertEqual(str(ExerciseComment.objects.get(pk=1)), 'test 123')
 
 
-class ExerciseCommentApiTestCase(ExerciseCrudApiTestCase):
+class ExerciseCommentApiTestCase(ActstreamApiMixin, ExerciseCrudApiTestCase):
     """
     Tests the exercise comment overview resource
     """

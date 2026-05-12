@@ -92,9 +92,10 @@ class ExerciseHistoryControl(WgerTestCase):
         self.assertEqual(translation.description, 'Boring exercise')
 
 
-class ExerciseHistoryControlRegression(WgerTestCase):
+class ExerciseHistoryControlExtras(WgerTestCase):
     """
-    Regression tests for the rewritten history control view.
+    Tests for pagination, filters and contributor flagging on the history
+    control view.
     """
 
     def setUp(self):

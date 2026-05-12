@@ -23,6 +23,7 @@ from django.db import transaction
 from django.db.models import Q
 
 # Third Party
+from actstream import action as actstream_action
 from lingua import LanguageDetectorBuilder
 from rest_framework import serializers
 
@@ -43,11 +44,29 @@ from wger.exercises.models import (
     Muscle,
     Translation,
 )
+from wger.exercises.views.helper import StreamVerbs
 from wger.utils.cache import CacheKeyMapper
 from wger.utils.constants import CC_BY_SA_4_LICENSE_ID
 
 
 logger = logging.getLogger(__name__)
+
+
+def _log_action_creation(serializer, instance):
+    """
+    Emit an actstream ``created`` event for a freshly-created instance.
+
+    Used by the submission serializers, which create nested objects directly
+    instead of going through the regular ViewSet ``perform_create`` path.
+    """
+    request = serializer.context.get('request')
+    if request is None or not getattr(request.user, 'is_authenticated', False):
+        return
+    actstream_action.send(
+        request.user,
+        verb=StreamVerbs.CREATED.value,
+        action_object=instance,
+    )
 
 
 class ExerciseSerializer(serializers.ModelSerializer):
@@ -254,6 +273,7 @@ class ExerciseCommentSubmissionSerializer(serializers.ModelSerializer):
 
         # Create the comment with the parent translation
         comment = ExerciseComment.objects.create(translation=translation, **validated_data)
+        _log_action_creation(self, comment)
         return comment
 
 
@@ -294,6 +314,7 @@ class ExerciseAliasSubmissionSerializer(serializers.ModelSerializer):
 
         # Create the Alias with the parent translation
         alias = Alias.objects.create(translation=translation, **validated_data)
+        _log_action_creation(self, alias)
         return alias
 
 
@@ -363,9 +384,9 @@ class MuscleSerializer(serializers.ModelSerializer):
         return None
 
 
-class ExerciseTranslationBaseInfoSerializer(serializers.ModelSerializer):
+class ExerciseTranslationInfoSerializer(serializers.ModelSerializer):
     """
-    Exercise translation serializer for the base info endpoint
+    Exercise translation serializer for the info endpoint
     """
 
     id = serializers.IntegerField(required=False, read_only=True)
@@ -467,6 +488,7 @@ class ExerciseTranslationSubmissionSerializer(serializers.ModelSerializer):
 
         # Create the translation with the parent exercise
         translation = Translation.objects.create(exercise=exercise, **validated_data)
+        _log_action_creation(self, translation)
 
         # Create the individual aliases
         for alias_data in aliases_data:
@@ -548,7 +570,7 @@ class ExerciseInfoSerializer(serializers.ModelSerializer):
     muscles = MuscleSerializer(many=True, read_only=True)
     muscles_secondary = MuscleSerializer(many=True, read_only=True)
     equipment = EquipmentSerializer(many=True, read_only=True)
-    translations = ExerciseTranslationBaseInfoSerializer(many=True, read_only=True)
+    translations = ExerciseTranslationInfoSerializer(many=True, read_only=True)
     videos = ExerciseVideoInfoSerializer(source='exercisevideo_set', many=True, read_only=True)
     author_history = serializers.ListSerializer(child=serializers.CharField())
     total_authors_history = serializers.ListSerializer(child=serializers.CharField())
@@ -692,6 +714,7 @@ class ExerciseSubmissionSerializer(serializers.ModelSerializer):
         exercise.muscles.set(validated_data.pop('muscles'))
         exercise.muscles_secondary.set(validated_data.pop('muscles_secondary'))
         exercise.equipment.set(validated_data.pop('equipment'))
+        _log_action_creation(self, exercise)
 
         # Create the individual translations
         for translation in validated_data.pop('translations', []):

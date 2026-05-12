@@ -24,6 +24,7 @@ from wger.exercises.models import (
     Muscle,
     Translation,
 )
+from wger.exercises.tests.api_mixins import ActstreamApiMixin
 from wger.utils.constants import (
     CC_0_LICENSE_ID,
     CC_BY_SA_4_LICENSE_ID,
@@ -114,8 +115,9 @@ class ExerciseInfoApiTestCase(
         return 'exerciseinfo'
 
 
-class ExerciseTranslationCustomApiTestCase(ExerciseCrudApiTestCase):
+class ExerciseTranslationCustomApiTestCase(ActstreamApiMixin, ExerciseCrudApiTestCase):
     pk = 1
+    resource = Translation
 
     data = {
         'name': 'A new name',

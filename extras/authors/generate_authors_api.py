@@ -280,9 +280,9 @@ def generate_contributors_rst(contributors: list[Person], output_file: str = 'co
         f.write('============\n\n')
         f.write(f'*Generated on {datetime.date.today()}*\n\n')
         f.write(
-            'Aggregated code contributors across all wger repositories '
-            '(server, react frontend, flutter mobile app, docker, docs).\n'
-            'Thank you all for contributing to the project, you are true heroes! 🫶\n\n'
+            'Aggregated code contributors across all wger repositories (backend,\n'
+            'react frontend, flutter mobile app, docker, docs). Thank you all\n'
+            'for contributing to the project, you are true heroes! 🫶\n\n'
         )
         for p in sorted_entries:
             entry = generate_rst_entry(p)
@@ -305,8 +305,8 @@ def generate_translators_rst(
         f.write('===========\n\n')
         f.write(f'*Generated on {datetime.date.today()}*\n\n')
         f.write(
-            'Thanks to everyone who has helped translate wger into other languages. '
-            'Contributions are made via `Weblate <https://hosted.weblate.org/engage/wger>`_ '
+            'Thanks to everyone who has helped translate wger into other languages.\n'
+            'Contributions are made via `Weblate <https://hosted.weblate.org/engage/wger>`_ \n'
             'and are collected here from all wger repositories.\n\n'
         )
         for language in sorted(translators.keys()):

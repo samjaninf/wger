@@ -30,13 +30,17 @@ def validate_language_matches(text: str, language: Language, source_label: str) 
     error message to point the caller at the offending field.
     """
 
-    detector = (
-        LanguageDetectorBuilder.from_all_languages()
-        .with_preloaded_language_models()
-        .build()
-    )
-
+    detector = LanguageDetectorBuilder.from_all_languages().build()
     detected_language = detector.detect_language_of(text)
+    if detected_language is None:
+        raise serializers.ValidationError(
+            {
+                'language': f'Could not detect the language of the {source_label}. '
+                f'Try adding more content or rephrasing your text, language '
+                f'detection works better with longer or more complete sentences.'
+            }
+        )
+
     detected_language_code = detected_language.iso_code_639_1.name.lower()
     if detected_language_code != language.short_name.lower():
         raise serializers.ValidationError(
@@ -45,7 +49,7 @@ def validate_language_matches(text: str, language: Language, source_label: str) 
                 f'"{detected_language.name.capitalize()}" ({detected_language_code}), '
                 f'which does not match your selected language: "{language.full_name.capitalize()}" '
                 f'({language.short_name}). If you believe this is incorrect, try adding '
-                f'more content or rephrasing your text, as language detection works'
+                f'more content or rephrasing your text, as language detection works '
                 f'better with longer or more complete sentences.'
             }
         )

@@ -96,7 +96,6 @@ def _content_type_map():
 
 
 class ActionHistoryFilter(django_filters.FilterSet):
-
     MODEL_CHOICES = [(key, key.capitalize()) for key, *_ in TRACKED_MODELS]
     VERB_CHOICES = [(v.value, v.value.capitalize()) for v in StreamVerbs]
 

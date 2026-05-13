@@ -27,8 +27,15 @@ from django.core.paginator import (
     PageNotAnInteger,
     Paginator,
 )
-from django.db.models import Q, QuerySet
-from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
+from django.db.models import (
+    Q,
+    QuerySet,
+)
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+)
 from django.shortcuts import (
     get_object_or_404,
     render,

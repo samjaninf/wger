@@ -169,9 +169,7 @@ class ExerciseHistoryControlExtras(WgerTestCase):
         self.assertEqual(len(response.context['context']), PAGE_SIZE)
         self.assertTrue(response.context['is_paginated'])
 
-        response_page2 = self.client.get(
-            reverse('exercise:history:overview') + '?page=2'
-        )
+        response_page2 = self.client.get(reverse('exercise:history:overview') + '?page=2')
         self.assertEqual(response_page2.status_code, 200)
         self.assertEqual(len(response_page2.context['context']), 5)
 
@@ -256,8 +254,7 @@ class ExerciseHistoryControlExtras(WgerTestCase):
         self.assertEqual(response.status_code, 200)
 
         deleted_events = [
-            e for e in response.context['context']
-            if e['verb'] == StreamVerbs.DELETED.value
+            e for e in response.context['context'] if e['verb'] == StreamVerbs.DELETED.value
         ]
         self.assertEqual(len(deleted_events), 1)
         self.assertEqual(deleted_events[0]['model_key'], 'exercise')
@@ -284,8 +281,7 @@ class ExerciseHistoryControlExtras(WgerTestCase):
         self.assertEqual(response.status_code, 200)
 
         merged_events = [
-            e for e in response.context['context']
-            if e['verb'] == StreamVerbs.MERGED.value
+            e for e in response.context['context'] if e['verb'] == StreamVerbs.MERGED.value
         ]
         self.assertEqual(len(merged_events), 1)
         self.assertEqual(merged_events[0]['stream'].action_object, replacement)
@@ -303,9 +299,7 @@ class ExerciseHistoryControlExtras(WgerTestCase):
             model_type='exercise',
         )
 
-        response = self.client.get(
-            reverse('exercise:history:overview') + '?verb=deleted'
-        )
+        response = self.client.get(reverse('exercise:history:overview') + '?verb=deleted')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['context']), 1)
         self.assertEqual(

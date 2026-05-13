@@ -28,7 +28,6 @@ CACHE_DIR = Path('commits_cache')
 BOT_AUTHORS = ('dependabot', 'github-actions')
 
 
-
 @dataclass
 class Person:
     """A contributor or translator, normalized from GitHub commit data."""
@@ -52,7 +51,6 @@ class Person:
     def identity_key(self) -> tuple[str, str]:
         """Stable key for cross-repo deduplication: by username when known, else email."""
         return ('user', self.username) if self.username else ('email', self.email)
-
 
 
 def get_github_token() -> str:
@@ -293,8 +291,7 @@ def generate_contributors_rst(contributors: list[Person], output_file: str = 'co
 
 
 def generate_translators_rst(
-    translators: dict[str, list[Person]],
-    output_file: str = 'translators.rst'
+    translators: dict[str, list[Person]], output_file: str = 'translators.rst'
 ):
     """Cross-repo, deduplicated translators list as RST, grouped by language."""
 
@@ -312,9 +309,7 @@ def generate_translators_rst(
         for language in sorted(translators.keys()):
             f.write(f'{language}\n')
             f.write('-' * len(language) + '\n\n')
-            sorted_people = sorted(
-                deduplicate(translators[language]), key=lambda p: p.name.lower()
-            )
+            sorted_people = sorted(deduplicate(translators[language]), key=lambda p: p.name.lower())
             for p in sorted_people:
                 entry = generate_rst_entry(p)
                 if entry:
@@ -359,8 +354,7 @@ if __name__ == '__main__':
         shutil.copy('wger-AUTHORS.md', '../../AUTHORS.md')
         print('Copied wger-AUTHORS.md to ../../AUTHORS.md')
         for repo in REPOSITORIES:
-
-            #This repo
+            # This repo
             if repo == 'wger':
                 continue
 

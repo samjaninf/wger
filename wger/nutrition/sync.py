@@ -387,8 +387,15 @@ def sync_ingredients(
     )
 
     count = 0
+    errors = 0
     for data in get_paginated(url, headers=wger_headers()):
-        _sync_ingredient_from_api_data(data)
+        try:
+            _sync_ingredient_from_api_data(data)
+        except (KeyError, ValueError, TypeError) as e:
+            # A single malformed or invalid record must not abort the whole run
+            errors += 1
+            logger.warning(f'Skipping malformed ingredient during sync: {e}')
+            continue
         count += 1
         pbar.update(1)
         if not show_progress_bar and count % API_MAX_ITEMS == 0:
@@ -396,7 +403,7 @@ def sync_ingredients(
 
     pbar.close()
 
-    print_fn(style_fn(f'done! Processed {count} ingredients.\n'))
+    print_fn(style_fn(f'done! Processed {count} ingredients ({errors} errors).\n'))
     return count
 
 
@@ -520,7 +527,12 @@ def sync_ingredients_from_dump(
                 errors += 1
                 continue
 
-            ingredient_data = extract_info_from_wger_api(data).dict()
+            try:
+                ingredient_data = extract_info_from_wger_api(data).dict()
+            except (KeyError, ValueError, TypeError):
+                # A single malformed or invalid record must not abort the import
+                errors += 1
+                continue
             ingredient_data['uuid'] = uuid
             weight_units_data = extract_weight_unit_info_from_wger_api(data)
 

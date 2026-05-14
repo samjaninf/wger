@@ -26,6 +26,7 @@ from typing import (
 
 # Django
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.base import File
 from django.core.files.storage import default_storage
 from django.db import IntegrityError
@@ -193,7 +194,11 @@ def fetch_image_from_wger_instance(ingredient):
         return
     except Image.DoesNotExist:
         retrieved_image = requests.get(image_data['image'], headers=wger_headers())
-        image = Image.from_json(ingredient, retrieved_image, image_data)
+        try:
+            image = Image.from_json(ingredient, retrieved_image, image_data)
+        except ValidationError as e:
+            logger.warning(f'Skipping invalid ingredient image: {"; ".join(e.messages)}')
+            return
         image.ingredient.last_image_check = timezone.now()
         image.ingredient.save()
 
@@ -273,6 +278,9 @@ def fetch_image_from_off(ingredient: Ingredient):
     except IntegrityError:
         logger.debug('Ingredient has already an image, skipping...')
         return
+    except ValidationError as e:
+        logger.warning(f'Skipping invalid ingredient image: {"; ".join(e.messages)}')
+        return
     logger.info('Image successfully saved')
 
 
@@ -305,7 +313,11 @@ def download_ingredient_images(
         except Image.DoesNotExist:
             print_fn('    Image not found in local DB, creating now...')
             retrieved_image = requests.get(image_data['image'], headers=headers)
-            Image.from_json(ingredient, retrieved_image, image_data)
+            try:
+                Image.from_json(ingredient, retrieved_image, image_data)
+            except ValidationError as e:
+                print_fn(style_fn(f'    invalid image, skipping: {"; ".join(e.messages)}'))
+                continue
 
         print_fn(style_fn('    successfully saved'))
 

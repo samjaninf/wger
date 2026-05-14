@@ -36,6 +36,9 @@ from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+# wger
+from wger.utils.images import validate_image_static_no_animation
+
 
 logger = logging.getLogger(__name__)
 
@@ -183,9 +186,13 @@ class BaseImageMixin:
         img_temp.write(retrieved_image.content)
         img_temp.flush()
 
+        # Validate image
+        image_file = File(img_temp)
+        validate_image_static_no_animation(image_file)
+
         self.image.save(
             os.path.basename(json_data['image']),
-            File(img_temp),
+            image_file,
         )
 
     @classmethod

@@ -117,7 +117,6 @@ class AddIngredientTestCase(WgerAddTestCase):
 
     object_class = Ingredient
     url = 'nutrition:ingredient:add'
-    user_fail = False
     data = {
         'name': 'A new ingredient',
         'sodium': 2,
@@ -134,7 +133,7 @@ class AddIngredientTestCase(WgerAddTestCase):
 
     def post_test_hook(self):
         """
-        Test that the creation date and the status are correctly set
+        Test that the creation date is correctly set
         """
         if self.current_user == 'admin':
             ingredient = Ingredient.objects.get(pk=self.pk_after)
@@ -142,8 +141,6 @@ class AddIngredientTestCase(WgerAddTestCase):
                 ingredient.created.replace(microsecond=0),
                 datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0),
             )
-        elif self.current_user == 'test':
-            ingredient = Ingredient.objects.get(pk=self.pk_after)
 
 
 class IngredientNameShortTestCase(WgerTestCase):

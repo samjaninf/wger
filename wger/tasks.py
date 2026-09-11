@@ -85,7 +85,7 @@ def bootstrap(context, settings_path=None, process_static=True):
         print('*** Database is empty or incomplete, setting it up now')
         migrate_db(context, settings_path=settings_path)
         load_fixtures(context, settings_path=settings_path)
-        create_or_reset_admin(context, settings_path=settings_path)
+        ensure_admin_user()
 
     # Download JS and CSS libraries
     if process_static:
@@ -105,16 +105,12 @@ def create_or_reset_admin(context, settings_path: str = None):
     # Django
     from django.contrib.auth.models import User
 
-    try:
-        User.objects.get(username='admin')
+    if User.objects.filter(username='admin').exists():
         print("*** Password for user admin was reset to 'adminadmin'")
-    except User.DoesNotExist:
+    else:
         print('*** Created default admin user')
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(current_dir, 'core', 'fixtures/')
-
-    call_command('loaddata', path + 'users.json')
+    load_admin_fixture()
 
 
 @task(help={'settings-path': 'Path to settings file. Leave empty for default (settings.main)'})
@@ -222,23 +218,59 @@ def setup_django_environment(settings_path: str = None):
 
 def database_initialised():
     """
-    Detect whether the database exists and was completely set up
+    Detect whether the database was completely set up
+
+    The admin user is created as the last step of the setup, so a database
+    without any users is either empty or the result of an interrupted setup.
     """
 
     # can't be imported in global scope as they already require
     # the settings module during import
     # Django
     from django.contrib.auth.models import User
-    from django.core.exceptions import ImproperlyConfigured
-    from django.db import DatabaseError
+    from django.db import (
+        DatabaseError,
+        connection,
+    )
+
+    # A database that can't be reached is an error, not an empty database.
+    connection.ensure_connection()
 
     try:
         return User.objects.exists()
-    except DatabaseError:
+    except DatabaseError as e:
+        # The tables were not created yet
+        print(f'*** Could not query the user table: {str(e).strip()}')
         return False
-    except ImproperlyConfigured as e:
-        print(style.ERROR('Your settings file seems broken: '), e)
-        sys.exit(0)
+
+
+def ensure_admin_user():
+    """
+    Create the default admin user if it does not exist
+
+    Unlike create_or_reset_admin, an existing admin user is left untouched.
+    """
+
+    # can't be imported in global scope as it already requires
+    # the settings module during import
+    # Django
+    from django.contrib.auth.models import User
+
+    if User.objects.filter(username='admin').exists():
+        return
+
+    print('*** Created default admin user')
+    load_admin_fixture()
+
+
+def load_admin_fixture():
+    """
+    Load the fixture with the default admin user (password 'adminadmin')
+    """
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(current_dir, 'core', 'fixtures/')
+
+    call_command('loaddata', path + 'users.json')
 
 
 class WgerConfig(Config):
